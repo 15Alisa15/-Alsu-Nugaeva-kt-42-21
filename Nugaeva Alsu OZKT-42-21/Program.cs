@@ -49,6 +49,7 @@ namespace Nugaeva_Alsu_OZKT_42_21
 					app.UseSwagger();
 					app.UseSwaggerUI();
 				}
+				app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 				app.UseAuthorization();
 
