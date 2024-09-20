@@ -38,9 +38,11 @@ namespace Nugaeva_Alsu_OZKT_42_21
 					options.UseSqlServer(connectionString));
 
 				// Добавляем наши сервисы
-				AddCustomServices(builder.Services);
+				
 
-				var app = builder.Build();
+                builder.Services.AddServices();
+
+                var app = builder.Build();
 
 				if (app.Environment.IsDevelopment())
 				{
