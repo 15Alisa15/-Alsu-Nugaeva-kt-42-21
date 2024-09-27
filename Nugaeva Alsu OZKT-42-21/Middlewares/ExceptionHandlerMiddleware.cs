@@ -1,78 +1,83 @@
-﻿
-	using Microsoft.AspNetCore.Http;
-	using Microsoft.Extensions.Logging;
-	using System.Collections.Generic;
-	using System;
-	using System.Net;
-	using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 
-	namespace Nugaeva_Alsu_OZKT_42_21.Middlewares
-	{
-		public class ExceptionHandlerMiddleware
-		{
-			private readonly ILogger<ExceptionHandlerMiddleware> _logger;
-			private readonly RequestDelegate _next;
+namespace Nugaeva_Alsu_OZKT_42_21.Middlewares
+{
+    public class ExceptionHandlerMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionHandlerMiddleware> _logger;
 
-			public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
-			{
-				_next = next;
-				_logger = logger;
-			}
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
+        {
+            _next = next;
+            _logger = logger;
+        }
 
-			public async Task Invoke(HttpContext context)
-			{
-				try
-				{
-					await _next(context);
-				}
-				catch (Exception exception)
-				{
-					_logger.LogError("Exception", exception);
+        public async Task InvokeAsync(HttpContext context)
+        {
+            try
+            {
+                await _next(context);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Unhandled exception occurred");
 
-					var httpResponse = context.Response;
-					httpResponse.ContentType = "application/json";
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-					var responseModel = new ResponseModel<object>
-					{
-						Succeeded = false,
-						Message = exception.Message
-					};
+                var response = new ResponseModel<object>
+                {
+                    Succeeded = false,
+                    Message = "An unexpected error occurred",
+                    Errors = new List<string> { exception.Message }
+                };
 
-					switch (exception)
-					{
-						default:
-							httpResponse.StatusCode = (int)HttpStatusCode.InternalServerError;
-							responseModel.Errors = new List<string> { exception.InnerException?.Message };
-							break;
-					}
+                switch (exception)
+                {
+                    case ApplicationException appEx:
+                        response.Errors = new List<string> { appEx.Message };
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        break;
+                    case UnauthorizedAccessException unauthorizedEx:
+                        response.Errors = new List<string> { unauthorizedEx.Message };
+                        response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        break;
+                }
 
-					await httpResponse.WriteAsJsonAsync(responseModel);
-				}
-			}
-		}
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        }
+    }
 
-		public class ResponseModel<T>
-		{
-			public bool Succeeded { get; set; }
-			public string Message { get; set; }
-			public List<string> Errors { get; set; }
-			public T Data { get; set; }
+    public class ResponseModel<T>
+    {
+        public bool Succeeded { get; set; }
+        public string Message { get; set; }
+        public List<string> Errors { get; set; }
+        public int StatusCode { get; set; }
+        public T Data { get; set; }
 
-			public ResponseModel()
-			{
-			}
+        public ResponseModel()
+        {
+        }
 
-			public ResponseModel(T data, string message = null)
-			{
-				Succeeded = true;
-				Message = message;
-				Data = data;
-			}
+        public ResponseModel(T data, string message = null)
+        {
+            Succeeded = true;
+            Message = message;
+            Data = data;
+        }
 
-			public ResponseModel(string message)
-			{
-				Succeeded = true;
-				Message = message;
-			}
-		}
-	}
+        public ResponseModel(string message)
+        {
+            Succeeded = true;
+            Message = message;
+        }
+    }
+}

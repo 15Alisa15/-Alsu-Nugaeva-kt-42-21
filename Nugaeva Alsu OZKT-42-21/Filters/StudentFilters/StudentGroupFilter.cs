@@ -1,4 +1,7 @@
-﻿namespace Nugaeva_Alsu_OZKT_42_21.Filters.StudentFilters
+﻿using Nugaeva_Alsu_OZKT_42_21.Database.Models;
+
+namespace Nugaeva_Alsu_OZKT_42_21.Filters.StudentFilters
+
 {
     public class StudentGroupFilter
     {

@@ -11,31 +11,18 @@ using Npgsql.EntityFrameworkCore;
 
 public class NugaevaDbContext : DbContext
 {
-	public DbSet<Student> Students { get; set; }
-	public DbSet<Nugaeva_Alsu_OZKT_42_21.Database.Models.Group> Groups { get; set; }
+    //Добавляем таблицы
+    public DbSet<Student> Students { get; set; }
+    public DbSet<Nugaeva_Alsu_OZKT_42_21.Database.Models.Group> Groups;
 
-	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-	{
-		if (!optionsBuilder.IsConfigured)
-		{
-			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetCurrentDirectory())
-				.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true)
-				.Build();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        //Добавляем конфигурации к таблицам
+        modelBuilder.ApplyConfiguration(new StudentConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupConfiguration());
+    }
 
-			optionsBuilder.UseNpgsql(configuration.GetConnectionString("NugaevaDbContextConnection"));
-		}
-	}
-
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
-	{
-		modelBuilder.ApplyConfiguration(new StudentConfiguration());
-		modelBuilder.ApplyConfiguration(new GroupConfiguration());
-
-		// Остальной код остается без изменений
-	}
-
-	public NugaevaDbContext(DbContextOptions<NugaevaDbContext> options) : base(options)
-	{
-	}
+    public NugaevaDbContext(DbContextOptions<NugaevaDbContext> options) : base(options)
+    {
+    }
 }
