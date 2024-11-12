@@ -16,8 +16,8 @@ namespace Nugaeva_Alsu_OZKT_42_21.Tests
         public StudentIntegrationTests()
         {
             _dbContextOptions = new DbContextOptionsBuilder<NugaevaDbContext>()
-            .UseInMemoryDatabase(databaseName: "student_db")
-            .Options;
+                .UseInMemoryDatabase(databaseName: "student_db")
+                .Options;
         }
 
         [Fact]
@@ -27,60 +27,71 @@ namespace Nugaeva_Alsu_OZKT_42_21.Tests
             var ctx = new NugaevaDbContext(_dbContextOptions);
             var studentService = new StudentService(ctx);
             var groups = new List<Group>
-    {
-        new Group
-        {
-            GroupName = "KT-42-21"
-        },
-        new Group
-        {
-            GroupName = "KT-41-21"
-        }
-    };
+            {
+                new Group
+                {
+                    GroupName = "KT-42-21"
+                },
+                new Group
+                {
+                    GroupName = "KT-44-21"
+                }
+            };
             await ctx.Set<Group>().AddRangeAsync(groups);
 
             var students = new List<Student>
-    {
-        new Student
-        {
-            FirstName = "qwerty",
-            LastName = "asdf",
-            MiddleName = "zxc",
-            GroupId = 1,
-        },
-        new Student
-        {
-            FirstName = "qwerty2",
-            LastName = "asdf2",
-            MiddleName = "zxc2",
-            GroupId = 2,
-        },
-        new Student
-        {
-            FirstName = "qwerty3",
-            LastName = "asdf3",
-            MiddleName = "zxc3",
-            GroupId = 1,
-        }
-    };
+            {
+                new Student
+                {
+                    FirstName = "Иван",
+                    LastName = "Иванов",
+                    MiddleName = "Иванович",
+                    GroupId = 2,
+                },
+                new Student
+                {
+                    FirstName = "Петр",
+                    LastName = "Петров",
+                    MiddleName = "Петрович",
+                    GroupId = 2,
+                },
+                new Student
+                {
+                    FirstName = "Владимир",
+                    LastName = "Владимиров",
+                    MiddleName = "Владимирович",
+                    GroupId = 2,
+                }
+            };
             await ctx.Set<Student>().AddRangeAsync(students);
 
             await ctx.SaveChangesAsync();
 
             // Act
-            var filter = new Filters.StudentFilters.StudentGroupFilter
+            var filterGroup = new Filters.StudentFilters.StudentGroupFilter
             {
-                GroupName = "KT-41-21"
+                GroupName = "KT-44-21"
+            };
+
+            var filterFIO = new Filters.StudentFilters.StudentFIOFilter
+            {
+                FirstName = "арпопаоп",
+                LastName = "Иванов",
+                MiddleName = "Иванович",
             };
 
             try
             {
-                var studentsResult = await studentService.GetStudentsByGroupAsync(filter, CancellationToken.None);
+                var studentsResultGroup = await studentService.GetStudentsByGroupAsync(filterGroup, CancellationToken.None);
+                var studentsResultFIO = await studentService.GetStudentsByFIOAsync(filterFIO, CancellationToken.None);
 
-                Assert.Single(studentsResult); // Проверяем, что вернулось одно студентское лицо
-                Assert.Equal("qwerty2", studentsResult.First().FirstName);
-                Assert.Equal("asdf2", studentsResult.First().LastName);
-                Assert.Equal("zxc2", studentsResult.First().MiddleName);
+                // Assert
+                Assert.Equal(3, studentsResultGroup.Length);
+
+                Assert.Equal(1, studentsResultFIO.Length);
+           
+               
+
             }
             catch (NullReferenceException ex)
             {

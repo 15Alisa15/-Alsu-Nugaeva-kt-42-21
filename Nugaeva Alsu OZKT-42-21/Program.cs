@@ -7,73 +7,80 @@ using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Web;
 using Nugaeva_Alsu_OZKT_42_21.Database;
+using Nugaeva_Alsu_OZKT_42_21.Interfaces.StudentsInterfaces;
 using Nugaeva_Alsu_OZKT_42_21.Middlewares;
-
-
+using Nugaeva_Alsu_OZKT_42_21.ServiceExtensions;
 using System;
 
 namespace Nugaeva_Alsu_OZKT_42_21
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			var builder = WebApplication.CreateBuilder(args);
+    public class Program
+    {
+        private const string DefaultConnectionName = "DefaultConnection";
 
-			var logger = LogManager.Setup()
-				.LoadConfigurationFromAppSettings()
-				.GetCurrentClassLogger();
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-			try
-			{
-				builder.Logging.ClearProviders();
-				builder.Host.UseNLog();
+            var logger = LogManager.Setup()
+                .LoadConfigurationFromAppSettings()
+                .GetCurrentClassLogger();
 
-				builder.Services.AddControllers();
-				builder.Services.AddEndpointsApiExplorer();
-				builder.Services.AddSwaggerGen();
+            try
+            {
+                builder.Host.UseNLog();
 
-				// Контекст БД
-				var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-				builder.Services.AddDbContext<NugaevaDbContext>(options =>
-					options.UseSqlServer(connectionString));
+                // Настройка логгера
+                builder.Logging.ClearProviders();
+                builder.Host.UseNLog();
 
-				// Добавляем наши сервисы
-				
+                // Конфигурация сервисов
+                builder.Services.AddControllers();
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
 
+                // Получение строки подключения
+                var connectionString = builder.Configuration.GetConnectionString(DefaultConnectionName) ??
+                    throw new InvalidOperationException($"Connection string '{DefaultConnectionName}' not found.");
+
+                // Добавление контекста базы данных
+                builder.Services.AddDbContext<NugaevaDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+
+                // Добавление пользовательских сервисов
+                //AddCustomServices(builder.Services);
                 builder.Services.AddServices();
 
                 var app = builder.Build();
 
-				if (app.Environment.IsDevelopment())
-				{
-					app.UseSwagger();
-					app.UseSwaggerUI();
-				}
-				app.UseMiddleware<ExceptionHandlerMiddleware>();
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
+                }
 
-				app.UseAuthorization();
+                app.UseMiddleware<ExceptionHandlerMiddleware>();
 
-				app.MapControllers();
+                app.UseAuthorization();
 
-				app.Run();
-			}
-			catch (Exception ex)
-			{
-				logger.Error(ex, "Stopped program because of exception");
-			}
-			finally
-			{
-				LogManager.Shutdown();
-			}
-		}
+                app.MapControllers();
 
-		private static void AddCustomServices(IServiceCollection services)
-		{
-			// Здесь добавляются наши пользовательские сервисы
-			// Например:
-			// services.AddSingleton<IYourService, YourServiceImpl>();
-			// services.AddScoped<IScopeService, ScopeServiceImpl>();
-		}
-	}
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Stopped program because of exception");
+                throw; // Перехватываем исключение и выбрасываем его снова
+            }
+            finally
+            {
+                LogManager.Shutdown();
+            }
+        }
+
+       /* private static void AddCustomServices(IServiceCollection services)
+        {
+            services.AddScoped<IStudentService, StudentService>();
+        }*/
+    }
 }

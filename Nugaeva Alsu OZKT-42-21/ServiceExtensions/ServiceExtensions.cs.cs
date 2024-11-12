@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Nugaeva_Alsu_OZKT_42_21.Interfaces;
 using Nugaeva_Alsu_OZKT_42_21.Interfaces.StudentsInterfaces;
 using System.Collections.Generic;
 
@@ -9,8 +10,10 @@ namespace Nugaeva_Alsu_OZKT_42_21.ServiceExtensions
 		public static IServiceCollection AddServices(this IServiceCollection services)
 		{
 			services.AddScoped<IStudentService, StudentService>();
+            services.AddScoped<ISubjectService, SubjectService>();
+            services.AddScoped<IGroupService, GroupService>();
 
-			return services;
+            return services;
 		}
 	}
 }
@@ -25,3 +28,7 @@ namespace Nugaeva_Alsu_OZKT_42_21.ServiceExtensions
 
 //insert into cd_student (c_student_firstname, c_student_lastname, c_student_middlename, f_group_id)
 //select 'Petr','Petrov','Petrovich',1;
+
+//insert into Students (c_student_firstname, c_student_lastname, c_student_middlename, GroupId,Id,IsDeleted)
+//select 'Кирилл','Кириллов','Кириллович',3,5,0;
+
